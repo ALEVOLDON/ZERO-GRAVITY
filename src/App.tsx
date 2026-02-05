@@ -148,8 +148,8 @@ export default function AntiGravityApp() {
             ) : (
               <>
                 {/* --- CATEGORY NAVIGATION --- */}
-                <div className="mb-12 overflow-x-auto pb-4 custom-scrollbar">
-                  <div className="flex flex-nowrap gap-3 md:justify-center">
+                <div className="mb-12 overflow-x-auto pb-4 custom-scrollbar p-1">
+                  <div className="flex flex-nowrap gap-3">
                     {categories.map((cat) => {
                       const Icon = cat.icon;
                       const isActive = activeCategory === cat.id;
