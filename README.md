@@ -4,9 +4,6 @@
 
 **Zero Gravity Dev** is an immersive, interactive resource portal designed to guide developers through their professional journey. It features a 3D environment, ambient audio system, and a gamified "Ascension Roadmap".
 
-![Zero Gravity Preview](Screenshots/dev1.png)
-*(Note: Screenshot placeholder)*
-
 ## 🌌 Features
 
 ### 1. **The Event Horizon (Home)**
