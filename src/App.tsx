@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Search, ExternalLink, Code2, Palette, Server, Box,
   BookOpen, Layout, Zap, Archive,

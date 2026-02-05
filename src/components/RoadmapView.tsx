@@ -1,4 +1,3 @@
-import React from 'react';
 import { roadmapStages } from '../data/roadmap';
 import { resourcesDB } from '../data/resources';
 import { ExternalLink } from 'lucide-react';
