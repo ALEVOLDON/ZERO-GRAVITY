@@ -3,30 +3,87 @@ import { Volume2, VolumeX } from 'lucide-react';
 
 export function AudioController() {
     const [muted, setMuted] = useState(true);
-    const audioRef = useRef<HTMLAudioElement | null>(null);
+    const audioContextRef = useRef<AudioContext | null>(null);
+    const gainNodeRef = useRef<GainNode | null>(null);
+    const oscillatorsRef = useRef<OscillatorNode[]>([]);
 
+    // Initialize Audio Engine
     useEffect(() => {
-        // Ambient Space Drone (Free sound or placeholder)
-        // Using a reliable placeholder URL for ambient drone
-        const AMBIENT_URL = "https://cdn.pixabay.com/download/audio/2022/03/24/audio_1e5b4b1c4e.mp3";
-
-        audioRef.current = new Audio(AMBIENT_URL);
-        audioRef.current.loop = true;
-        audioRef.current.volume = 0.3;
-
-        return () => {
-            audioRef.current?.pause();
-            audioRef.current = null;
-        };
+        return () => stopAudio();
     }, []);
 
-    useEffect(() => {
-        if (!audioRef.current) return;
+    const startAudio = () => {
+        if (!audioContextRef.current) {
+            audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        }
 
+        const ctx = audioContextRef.current;
+
+        // Create Master Gain
+        const masterGain = ctx.createGain();
+        masterGain.gain.setValueAtTime(0, ctx.currentTime);
+        masterGain.connect(ctx.destination);
+        gainNodeRef.current = masterGain;
+
+        // Create Oscillators for "Space Drone"
+        // Osc 1: Deep Bass
+        const osc1 = ctx.createOscillator();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(60, ctx.currentTime); // 60Hz Low Drone
+
+        // Osc 2: Detuned slightly for "shimmer" (Binaural effect)
+        const osc2 = ctx.createOscillator();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(62, ctx.currentTime); // 62Hz
+
+        // Osc 3: Harmonic
+        const osc3 = ctx.createOscillator();
+        osc3.type = 'triangle';
+        osc3.frequency.setValueAtTime(120, ctx.currentTime); // 120Hz Harmonic
+
+        // Individual Gains
+        const osc1Gain = ctx.createGain(); osc1Gain.gain.value = 0.4;
+        const osc2Gain = ctx.createGain(); osc2Gain.gain.value = 0.4;
+        const osc3Gain = ctx.createGain(); osc3Gain.gain.value = 0.05; // Quiet harmonic
+
+        osc1.connect(osc1Gain); osc1Gain.connect(masterGain);
+        osc2.connect(osc2Gain); osc2Gain.connect(masterGain);
+        osc3.connect(osc3Gain); osc3Gain.connect(masterGain);
+
+        osc1.start();
+        osc2.start();
+        osc3.start();
+
+        oscillatorsRef.current = [osc1, osc2, osc3];
+
+        // Fade In
+        masterGain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 2);
+    };
+
+    const stopAudio = () => {
+        if (gainNodeRef.current && audioContextRef.current) {
+            // Fade Out
+            gainNodeRef.current.gain.linearRampToValueAtTime(0, audioContextRef.current.currentTime + 0.5);
+
+            setTimeout(() => {
+                oscillatorsRef.current.forEach(osc => osc.stop());
+                oscillatorsRef.current = [];
+
+                // Don't close context, just stop oscillators to allow restart
+            }, 500);
+        }
+    };
+
+    useEffect(() => {
         if (muted) {
-            audioRef.current.pause();
+            stopAudio();
         } else {
-            audioRef.current.play().catch(e => console.log("Audio play failed (interaction needed):", e));
+            if (audioContextRef.current?.state === 'suspended') {
+                audioContextRef.current.resume();
+            }
+            if (oscillatorsRef.current.length === 0) {
+                startAudio();
+            }
         }
     }, [muted]);
 
