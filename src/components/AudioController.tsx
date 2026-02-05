@@ -90,7 +90,7 @@ export function AudioController() {
     return (
         <button
             onClick={() => setMuted(!muted)}
-            className="fixed bottom-6 right-6 z-50 p-3 rounded-full bg-black/50 border border-white/10 text-slate-400 hover:text-white hover:border-white/30 backdrop-blur-md transition-all group"
+            className="fixed bottom-6 right-4 md:right-6 z-50 p-2 md:p-3 rounded-full bg-black/50 border border-white/10 text-slate-400 hover:text-white hover:border-white/30 backdrop-blur-md transition-all group scale-90 md:scale-100"
             aria-label="Toggle Audio"
         >
             {muted ? (

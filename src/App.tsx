@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import {
   Search, ExternalLink, Code2, Palette, Server, Box,
-  BookOpen, PenTool, Layout, Zap, Archive, Sparkles,
-  Cpu, Globe, Layers, Database, Command, Terminal, Map, Rocket
+  BookOpen, Layout, Zap, Archive,
+  Terminal, Map, Rocket
 } from 'lucide-react';
 import { resourcesDB, categories } from './data/resources';
 import { RoadmapView } from './components/RoadmapView';
@@ -157,7 +157,7 @@ export default function AntiGravityApp() {
                         <button
                           key={cat.id}
                           onClick={() => setActiveCategory(cat.id)}
-                          className={`relative group px-5 py-2.5 rounded-xl text-xs font-bold tracking-wider uppercase transition-all duration-300 whitespace-nowrap overflow-hidden
+                          className={`relative group px-5 py-2.5 rounded-xl text-xs font-bold tracking-wider uppercase transition-all duration-300 whitespace-nowrap overflow-hidden flex-shrink-0
                                 ${isActive ? 'text-white' : 'text-slate-500 hover:text-slate-300'}
                             `}
                         >

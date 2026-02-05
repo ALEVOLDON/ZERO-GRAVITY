@@ -29,12 +29,12 @@ export function HeroSection({ onStart }: { onStart: () => void }) {
                     Incoming Transmission
                 </div>
 
-                <h1 className="text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white via-slate-200 to-slate-500 mb-6 tracking-tighter">
+                <h1 className="text-4xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white via-slate-200 to-slate-500 mb-6 tracking-tighter">
                     ZERO GRAVITY<br />
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400">DEV</span>
                 </h1>
 
-                <p className="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 font-light leading-relaxed">
+                <p className="text-slate-400 text-sm md:text-xl max-w-sm md:max-w-2xl mx-auto mb-10 font-light leading-relaxed">
                     Покиньте орбиту новичка. Интерактивная карта ресурсов, инструментов и знаний для выхода в открытый космос профессиональной разработки.
                 </p>
 
