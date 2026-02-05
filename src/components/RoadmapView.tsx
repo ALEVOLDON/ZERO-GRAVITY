@@ -1,8 +1,13 @@
-﻿import { roadmapStages } from '../data/roadmap';
+﻿import { useMemo } from 'react';
+import { roadmapStages } from '../data/roadmap';
 import { resourcesDB } from '../data/resources';
 import { ExternalLink } from 'lucide-react';
 
 export function RoadmapView() {
+    const resourcesById = useMemo(() => {
+        return new Map(resourcesDB.map((resource) => [resource.id, resource]));
+    }, []);
+
     return (
         <div className="max-w-4xl mx-auto pb-20 px-4 relative">
             {/* Central Line (Tether) - Mobile: Left aligned, Desktop: Center */}
@@ -60,7 +65,7 @@ export function RoadmapView() {
 
                                         <div className="space-y-2 md:space-y-3">
                                             {step.resourceIds.map(resId => {
-                                                const resource = resourcesDB.find(r => r.id === resId);
+                                                const resource = resourcesById.get(resId);
                                                 if (!resource) return null;
 
                                                 return (
@@ -103,3 +108,5 @@ export function RoadmapView() {
         </div>
     );
 }
+
+
