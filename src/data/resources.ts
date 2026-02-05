@@ -1,4 +1,4 @@
-import {
+﻿import {
     Box, BookOpen, Palette, Layout, Server, Terminal, Sparkles, Zap
 } from 'lucide-react';
 

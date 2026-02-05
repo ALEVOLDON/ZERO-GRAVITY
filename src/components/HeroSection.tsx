@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { ArrowDownCircle, Rocket } from 'lucide-react';
 
 export function HeroSection({ onStart }: { onStart: () => void }) {
