@@ -28,6 +28,20 @@ const styles = `
   .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
   .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(139, 92, 246, 0.3); border-radius: 10px; }
   .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(139, 92, 246, 0.5); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-float,
+    .animate-ping,
+    .animate-bounce,
+    .animate-pulse {
+      animation: none !important;
+    }
+    .transition-all,
+    .transition-opacity,
+    .transition-transform {
+      transition: none !important;
+    }
+  }
 `;
 
 export default function AntiGravityApp() {
@@ -124,6 +138,7 @@ export default function AntiGravityApp() {
                           type="text"
                           className="block w-full pl-3 pr-4 py-2 bg-transparent border-none text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-0 text-xs font-mono tracking-wide"
                           placeholder="SEARCH SYSTEM..."
+                          aria-label="Search resources"
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
                         />
@@ -157,6 +172,7 @@ export default function AntiGravityApp() {
                         <button
                           key={cat.id}
                           onClick={() => setActiveCategory(cat.id)}
+                          aria-pressed={isActive}
                           className={`relative group px-5 py-2.5 rounded-xl text-xs font-bold tracking-wider uppercase transition-all duration-300 whitespace-nowrap overflow-hidden flex-shrink-0
                                 ${isActive ? 'text-white' : 'text-slate-500 hover:text-slate-300'}
                             `}

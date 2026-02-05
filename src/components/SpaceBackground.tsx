@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Points, PointMaterial } from '@react-three/drei';
 import * as random from 'maath/random/dist/maath-random.esm';
@@ -31,14 +31,30 @@ function Stars(props: any) {
 
 
 export function SpaceBackground() {
+    const [reducedMotion, setReducedMotion] = useState(false);
+
+    useEffect(() => {
+        const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+        const onChange = () => setReducedMotion(media.matches);
+        onChange();
+        if (media.addEventListener) {
+            media.addEventListener('change', onChange);
+            return () => media.removeEventListener('change', onChange);
+        }
+        media.addListener(onChange);
+        return () => media.removeListener(onChange);
+    }, []);
+
     return (
         <div className="fixed inset-0 z-0 bg-[#05060A]">
-            <Canvas camera={{ position: [0, 0, 1] }}>
-                <Stars />
-            </Canvas>
+            {!reducedMotion && (
+                <Canvas camera={{ position: [0, 0, 1] }}>
+                    <Stars />
+                </Canvas>
+            )}
             {/* Overlay gradient for depth */}
             <div className="absolute inset-0 bg-gradient-to-t from-[#05060A] via-transparent to-transparent pointer-events-none" />
-            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay pointer-events-none" />
+            <div className="absolute inset-0 bg-[url('/assets/noise.svg')] opacity-20 mix-blend-overlay pointer-events-none" />
         </div>
     );
 }
