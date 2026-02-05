@@ -5,12 +5,28 @@ export function AudioController() {
     const [muted, setMuted] = useState(true);
     const audioContextRef = useRef<AudioContext | null>(null);
     const gainNodeRef = useRef<GainNode | null>(null);
-    const oscillatorsRef = useRef<OscillatorNode[]>([]);
+    const sourcesRef = useRef<AudioScheduledSourceNode[]>([]);
+    const lfoRef = useRef<OscillatorNode | null>(null);
+    const driftTimerRef = useRef<number | null>(null);
 
     // Initialize Audio Engine
     useEffect(() => {
         return () => stopAudio();
     }, []);
+
+    const createNoiseBuffer = (ctx: AudioContext) => {
+        const length = ctx.sampleRate * 2;
+        const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        let lastOut = 0;
+        for (let i = 0; i < length; i += 1) {
+            const white = Math.random() * 2 - 1;
+            data[i] = (lastOut + (0.02 * white)) / 1.02;
+            lastOut = data[i];
+            data[i] *= 3.5;
+        }
+        return buffer;
+    };
 
     const startAudio = () => {
         if (!audioContextRef.current) {
@@ -25,39 +41,98 @@ export function AudioController() {
         masterGain.connect(ctx.destination);
         gainNodeRef.current = masterGain;
 
-        // Create Oscillators for "Space Drone"
-        // Osc 1: Deep Bass
-        const osc1 = ctx.createOscillator();
-        osc1.type = 'sine';
-        osc1.frequency.setValueAtTime(60, ctx.currentTime); // 60Hz Low Drone
+        // Ambient mix bus
+        const mixGain = ctx.createGain();
+        mixGain.gain.value = 0.8;
+        mixGain.connect(masterGain);
 
-        // Osc 2: Detuned slightly for "shimmer" (Binaural effect)
-        const osc2 = ctx.createOscillator();
-        osc2.type = 'sine';
-        osc2.frequency.setValueAtTime(62, ctx.currentTime); // 62Hz
+        // Soft pad layer
+        const pad1 = ctx.createOscillator();
+        const pad2 = ctx.createOscillator();
+        pad1.type = 'triangle';
+        pad2.type = 'sine';
+        pad1.frequency.setValueAtTime(110, ctx.currentTime);
+        pad2.frequency.setValueAtTime(165, ctx.currentTime);
+        pad1.detune.setValueAtTime(-6, ctx.currentTime);
+        pad2.detune.setValueAtTime(7, ctx.currentTime);
 
-        // Osc 3: Harmonic
-        const osc3 = ctx.createOscillator();
-        osc3.type = 'triangle';
-        osc3.frequency.setValueAtTime(120, ctx.currentTime); // 120Hz Harmonic
+        const padGain = ctx.createGain();
+        padGain.gain.value = 0.12;
+        pad1.connect(padGain);
+        pad2.connect(padGain);
+        padGain.connect(mixGain);
 
-        // Individual Gains
-        const osc1Gain = ctx.createGain(); osc1Gain.gain.value = 0.4;
-        const osc2Gain = ctx.createGain(); osc2Gain.gain.value = 0.4;
-        const osc3Gain = ctx.createGain(); osc3Gain.gain.value = 0.05; // Quiet harmonic
+        // Noise layer with slow filter sweep
+        const noiseSource = ctx.createBufferSource();
+        noiseSource.buffer = createNoiseBuffer(ctx);
+        noiseSource.loop = true;
 
-        osc1.connect(osc1Gain); osc1Gain.connect(masterGain);
-        osc2.connect(osc2Gain); osc2Gain.connect(masterGain);
-        osc3.connect(osc3Gain); osc3Gain.connect(masterGain);
+        const noiseFilter = ctx.createBiquadFilter();
+        noiseFilter.type = 'lowpass';
+        noiseFilter.frequency.setValueAtTime(700, ctx.currentTime);
+        noiseFilter.Q.setValueAtTime(0.6, ctx.currentTime);
 
-        osc1.start();
-        osc2.start();
-        osc3.start();
+        const noiseGain = ctx.createGain();
+        noiseGain.gain.value = 0.05;
 
-        oscillatorsRef.current = [osc1, osc2, osc3];
+        noiseSource.connect(noiseFilter);
+        noiseFilter.connect(noiseGain);
+        noiseGain.connect(mixGain);
+
+        // LFO to gently move the filter cutoff
+        const lfo = ctx.createOscillator();
+        const lfoGain = ctx.createGain();
+        lfo.type = 'sine';
+        lfo.frequency.setValueAtTime(0.03, ctx.currentTime);
+        lfoGain.gain.value = 300;
+        lfo.connect(lfoGain);
+        lfoGain.connect(noiseFilter.frequency);
+        lfo.start();
+        lfoRef.current = lfo;
+
+        // Subtle spacey delay
+        const delay = ctx.createDelay(1.0);
+        const feedback = ctx.createGain();
+        const delaySend = ctx.createGain();
+        delay.delayTime.value = 0.45;
+        feedback.gain.value = 0.2;
+        delaySend.gain.value = 0.15;
+
+        mixGain.connect(delaySend);
+        delaySend.connect(delay);
+        delay.connect(feedback);
+        feedback.connect(delay);
+        delay.connect(masterGain);
+
+        pad1.start();
+        pad2.start();
+        noiseSource.start();
+
+        sourcesRef.current = [pad1, pad2, noiseSource];
+
+        // Slow random drifts for evolving ambience
+        const scheduleDrift = () => {
+            const now = ctx.currentTime;
+            const t = now + 6;
+
+            pad1.frequency.cancelScheduledValues(now);
+            pad2.frequency.cancelScheduledValues(now);
+            noiseFilter.frequency.cancelScheduledValues(now);
+            delay.delayTime.cancelScheduledValues(now);
+
+            pad1.frequency.linearRampToValueAtTime(95 + Math.random() * 35, t);
+            pad2.frequency.linearRampToValueAtTime(140 + Math.random() * 60, t);
+            noiseFilter.frequency.linearRampToValueAtTime(450 + Math.random() * 900, t);
+            delay.delayTime.linearRampToValueAtTime(0.3 + Math.random() * 0.3, t);
+        };
+
+        scheduleDrift();
+        driftTimerRef.current = window.setInterval(() => {
+            scheduleDrift();
+        }, 9000 + Math.floor(Math.random() * 7000));
 
         // Fade In
-        masterGain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 2);
+        masterGain.gain.linearRampToValueAtTime(0.35, ctx.currentTime + 3);
     };
 
     const stopAudio = () => {
@@ -66,8 +141,26 @@ export function AudioController() {
             gainNodeRef.current.gain.linearRampToValueAtTime(0, audioContextRef.current.currentTime + 0.5);
 
             setTimeout(() => {
-                oscillatorsRef.current.forEach(osc => osc.stop());
-                oscillatorsRef.current = [];
+                sourcesRef.current.forEach(source => {
+                    try {
+                        source.stop();
+                    } catch {
+                        // ignore
+                    }
+                });
+                sourcesRef.current = [];
+                if (lfoRef.current) {
+                    try {
+                        lfoRef.current.stop();
+                    } catch {
+                        // ignore
+                    }
+                    lfoRef.current = null;
+                }
+                if (driftTimerRef.current !== null) {
+                    window.clearInterval(driftTimerRef.current);
+                    driftTimerRef.current = null;
+                }
 
                 // Don't close context, just stop oscillators to allow restart
             }, 500);
@@ -81,7 +174,7 @@ export function AudioController() {
             if (audioContextRef.current?.state === 'suspended') {
                 audioContextRef.current.resume();
             }
-            if (oscillatorsRef.current.length === 0) {
+            if (sourcesRef.current.length === 0) {
                 startAudio();
             }
         }
